@@ -62,9 +62,11 @@ module.exports = (grunt) ->
 
                 # Iterate over all specified file groups.
                 @o.files.forEach (f) =>
-              
+                    @f = f
+                    filepath = ''
                     # Read file source.
                     src = f.src.filter((filepath) ->
+                        filepath = filepath
                         unless grunt.file.exists(filepath)
                             grunt.log.warn "Source file \"" + filepath + "\" not found."
                             false
@@ -73,20 +75,27 @@ module.exports = (grunt) ->
                     ).map((filepath) ->
                         grunt.file.read filepath )
                     
-                    $destFile = $(src[0]).wrap('<div>').parent()
-                    @$destFile = $destFile
-                    
-                    $tags = $destFile.find('layout')
-                    @$tags = $tags
-                    
-                    for j in [0...$tags.length]
-                        @files[j] = {}
-                        for attr, i in $tags[j].attributes
-                            @files[j][attr.nodeName] = attr.nodeValue
+                    for file, z in src
 
-                        @compile j, f
 
-                        if j is $tags[j].attributes.length-1 then @dfr.resolve @files
+                        $destFile = $(file).wrap('<div>').parent()
+                        @$destFile = $destFile
+                        
+                        $tags = $destFile.find('layout')
+                        @$tags = $tags
+                        
+                        for j in [0...$tags.length]
+                            @files[j] = {}
+                            for attr, i in $tags[j].attributes
+                                @files[j][attr.nodeName] = attr.nodeValue
+
+
+                            @compile j, f
+
+                            if j is $tags[j].attributes.length-1 then @dfr.resolve @files
+                        
+                        grunt.file.write "dest/#{@f.src[0]}", @$destFile.html() 
+
 
                 @dfr.promise()
 
@@ -97,7 +106,7 @@ module.exports = (grunt) ->
                     file = file.replace patt, value
 
                 $(@$tags[j]).replaceWith file
-                grunt.file.write f.dest+'aa.html', @$destFile.html() 
+
 
 
         filesChanged = new  FilesChanged 
