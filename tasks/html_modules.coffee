@@ -8,6 +8,40 @@
 "use strict"
 
 module.exports = (grunt) ->
+    fs      = require 'fs'
+    $       = require 'jquery'
+    cheerio = require 'cheerio'
+
+    data = {}
+    class Files
+        constructor:(o)->
+            @o = o
+            @fs = fs
+            @dir = 'tasks/src/'
+            @files = []
+
+        readFiles:->
+            @dfr = new $.Deferred
+
+            @fs.readdir @dir, (err, files)=>
+                if err then throw err;
+                files = @getValidFiles files
+                files.forEach (file, i)=>
+                    fs.readFile @dir+file, 'utf-8', (err, html)=>
+                        err and (throw err)
+                        @files[i] = {}
+                        @files[i][file.split('.')[0]] = html
+                        if i is files.length-1 then @dfr.resolve()
+
+            @dfr.promise()
+
+        getValidFiles:(files)->
+            files.filter (file)->
+                file.match /.html$/gi
+    
+    filesStorage = new Files
+    filesStorage.readFiles().then =>
+        console.log filesStorage.files
     # Please see the Grunt documentation for more information regarding task
     # creation: http://gruntjs.com/creating-tasks
     grunt.registerMultiTask "html_modules", "allows to include small html parts in other html", ->
@@ -17,49 +51,46 @@ module.exports = (grunt) ->
             punctuation: "."
             separator: ", "
 
-        fs = require 'fs'
-        $ = require 'jquery-deferred'
-        data = {}
-        class Files
+        class FilesChanged 
             constructor:(o)->
                 @o = o
-                @fs = fs
-                @dir = 'tasks/src/'
-                @files = {}
+                @files = []
 
-            readFiles:->
+                @getFiles()
+
+            getFiles:->
                 @dfr = new $.Deferred
 
-                @fs.readdir @dir, (err, files)=>
-                    if err then throw err;
-                    files = @getValidFiles files
-                    files.forEach (file, i)=>
-                        fs.readFile @dir+file, 'utf-8', (err, html)=>
-                            err and (throw err)
-                            @files[file.split('.')[0]] = html
-                            if i is files.length-1 then @dfr.resolve()
+                # Iterate over all specified file groups.
+                @o.files.forEach (f) =>
+              
+                    # Read file source.
+                    src = f.src.filter((filepath) ->
+                        unless grunt.file.exists(filepath)
+                            grunt.log.warn "Source file \"" + filepath + "\" not found."
+                            false
+                        else
+                            true
+                    ).map((filepath) ->
+                        grunt.file.read filepath )
+                    
+                    file = src[0]
+
+                    $r = $(file)
+
+                    for attr, i in $r[0].attributes
+                        @files[i] = 
+                            name:   attr.nodeName
+                            val:    attr.nodeValue
+
+                        if i is $r[0].attributes.length-1 then @dfr.resolve()
+
 
                 @dfr.promise()
 
-            getValidFiles:(files)->
-                files.filter (file)->
-                    file.match /.html$/gi
-        filesStorage = new Files
-        filesStorage.readFiles()
-    
-        # Iterate over all specified file groups.
-        @files.forEach (f) ->
-      
-            # Read file source.
-            src = f.src.filter((filepath) ->
-                unless grunt.file.exists(filepath)
-                    grunt.log.warn "Source file \"" + filepath + "\" not found."
-                    false
-                else
-                    true
-            ).map((filepath) ->
-                grunt.file.read filepath )
-            
-            file = src[0]
-            console.log file
+
+
+
+        filesChanged = new  FilesChanged 
+                                files: @files
 
