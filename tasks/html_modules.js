@@ -63,9 +63,13 @@
       });
       FilesChanged = (function() {
         function FilesChanged(o) {
+          var _this = this;
+
           this.o = o;
           this.files = [];
-          this.getFiles();
+          this.getFiles().then(function() {
+            return console.log(_this.files);
+          });
         }
 
         FilesChanged.prototype.getFiles = function() {
@@ -73,7 +77,7 @@
 
           this.dfr = new $.Deferred;
           this.o.files.forEach(function(f) {
-            var $r, attr, file, i, src, _i, _len, _ref, _results;
+            var $tag, $tags, attr, i, j, src, _i, _j, _len, _ref, _ref1, _results;
 
             src = f.src.filter(function(filepath) {
               if (!grunt.file.exists(filepath)) {
@@ -85,18 +89,27 @@
             }).map(function(filepath) {
               return grunt.file.read(filepath);
             });
-            file = src[0];
-            $r = $(file);
-            _ref = $r[0].attributes;
+            $tag = $(src[0]);
+            _this.$tag = $tag;
+            if ($tag[0].tagName.toLowerCase() !== 'layout') {
+              $tags = $tag.find('layout');
+            } else {
+              $tags = [$tag];
+            }
             _results = [];
-            for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-              attr = _ref[i];
-              _this.files[i] = {
-                name: attr.nodeName,
-                val: attr.nodeValue
-              };
-              if (i === $r[0].attributes.length - 1) {
-                _results.push(_this.dfr.resolve());
+            for (j = _i = 0, _ref = $tags.length; 0 <= _ref ? _i < _ref : _i > _ref; j = 0 <= _ref ? ++_i : --_i) {
+              _this.files[j] = [];
+              _ref1 = $tags[j].attributes;
+              for (i = _j = 0, _len = _ref1.length; _j < _len; i = ++_j) {
+                attr = _ref1[i];
+                _this.files[j][i] = {
+                  name: attr.nodeName,
+                  val: attr.nodeValue
+                };
+              }
+              _this.compile($tags[j]);
+              if (j === $tags[j].attributes.length - 1) {
+                _results.push(_this.dfr.resolve(_this.files));
               } else {
                 _results.push(void 0);
               }
@@ -104,6 +117,11 @@
             return _results;
           });
           return this.dfr.promise();
+        };
+
+        FilesChanged.prototype.compile = function(tag) {
+          console.log($(tag).replaceWith('a'));
+          return console.log(this.$tag.wrap("<div>").parent().html());
         };
 
         return FilesChanged;

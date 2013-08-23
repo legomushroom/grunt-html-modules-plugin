@@ -56,7 +56,8 @@ module.exports = (grunt) ->
                 @o = o
                 @files = []
 
-                @getFiles()
+                @getFiles().then =>
+                    console.log @files
 
             getFiles:->
                 @dfr = new $.Deferred
@@ -74,20 +75,29 @@ module.exports = (grunt) ->
                     ).map((filepath) ->
                         grunt.file.read filepath )
                     
-                    file = src[0]
+                    $tag = $(src[0])
+                    @$tag = $tag
 
-                    $r = $(file)
+                    if $tag[0].tagName.toLowerCase() isnt 'layout'
+                        $tags = $tag.find('layout')
+                    else $tags = [$tag]
 
-                    for attr, i in $r[0].attributes
-                        @files[i] = 
-                            name:   attr.nodeName
-                            val:    attr.nodeValue
+                    for j in [0...$tags.length]
+                        @files[j] = []
+                        for attr, i in $tags[j].attributes
+                            @files[j][i] = 
+                                name:   attr.nodeName
+                                val:    attr.nodeValue
 
-                        if i is $r[0].attributes.length-1 then @dfr.resolve()
+                        @compile $tags[j]
 
+                        if j is $tags[j].attributes.length-1 then @dfr.resolve @files
 
                 @dfr.promise()
 
+            compile:(tag)->
+                console.log $(tag).replaceWith 'a'
+                console.log @$tag.wrap("<div>").parent().html()
 
 
 
