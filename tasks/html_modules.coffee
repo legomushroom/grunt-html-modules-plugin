@@ -18,7 +18,7 @@ module.exports = (grunt) ->
             @o = o
             @fs = fs
             @dir = 'tasks/src/'
-            @files = []
+            @files = {}
 
         readFiles:->
             @dfr = new $.Deferred
@@ -29,9 +29,8 @@ module.exports = (grunt) ->
                 files.forEach (file, i)=>
                     fs.readFile @dir+file, 'utf-8', (err, html)=>
                         err and (throw err)
-                        @files[i] = {}
-                        @files[i][file.split('.')[0]] = html
-                        if i is files.length-1 then @dfr.resolve()
+                        @files[file.split('.')[0]] = html
+                        if i is files.length-1 then @dfr.resolve @files
 
             @dfr.promise()
 
@@ -40,8 +39,7 @@ module.exports = (grunt) ->
                 file.match /.html$/gi
     
     filesStorage = new Files
-    filesStorage.readFiles().then =>
-        console.log filesStorage.files
+    
     # Please see the Grunt documentation for more information regarding task
     # creation: http://gruntjs.com/creating-tasks
     grunt.registerMultiTask "html_modules", "allows to include small html parts in other html", ->
@@ -56,8 +54,8 @@ module.exports = (grunt) ->
                 @o = o
                 @files = []
 
-                @getFiles().then =>
-                    console.log @files
+                filesStorage.readFiles().then (files)=>
+                    @getFiles().then =>
 
             getFiles:->
                 @dfr = new $.Deferred
@@ -75,30 +73,32 @@ module.exports = (grunt) ->
                     ).map((filepath) ->
                         grunt.file.read filepath )
                     
-                    $tag = $(src[0])
-                    @$tag = $tag
-
-                    if $tag[0].tagName.toLowerCase() isnt 'layout'
-                        $tags = $tag.find('layout')
-                    else $tags = [$tag]
-
+                    $destFile = $(src[0]).wrap('<div>').parent()
+                    @$destFile = $destFile
+                    
+                    $tags = $destFile.find('layout')
+                    @$tags = $tags
+                    
                     for j in [0...$tags.length]
-                        @files[j] = []
+                        @files[j] = {}
                         for attr, i in $tags[j].attributes
-                            @files[j][i] = 
-                                name:   attr.nodeName
-                                val:    attr.nodeValue
+                            @files[j][attr.nodeName] = attr.nodeValue
 
-                        @compile $tags[j]
+                        @compile j
 
                         if j is $tags[j].attributes.length-1 then @dfr.resolve @files
 
                 @dfr.promise()
 
-            compile:(tag)->
-                console.log $(tag).replaceWith 'a'
-                console.log @$tag.wrap("<div>").parent().html()
+            compile:(j)->
+                file = filesStorage.files[@files[j].key]
+                for name, value of @files[j]
+                    patt = new RegExp "\\$#{name}", 'gi'
+                    file = file.replace patt, value
 
+                $(@$tags[j]).replaceWith file
+                console.log '--->'
+                console.log @$destFile.html()
 
 
         filesChanged = new  FilesChanged 
