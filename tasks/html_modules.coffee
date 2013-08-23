@@ -10,7 +10,6 @@
 module.exports = (grunt) ->
     fs      = require 'fs'
     $       = require 'jquery'
-    cheerio = require 'cheerio'
 
     data = {}
     class Files
@@ -53,6 +52,7 @@ module.exports = (grunt) ->
             constructor:(o)->
                 @o = o
                 @files = []
+                @compiled = ''
 
                 filesStorage.readFiles().then (files)=>
                     @getFiles().then =>
@@ -84,21 +84,20 @@ module.exports = (grunt) ->
                         for attr, i in $tags[j].attributes
                             @files[j][attr.nodeName] = attr.nodeValue
 
-                        @compile j
+                        @compile j, f
 
                         if j is $tags[j].attributes.length-1 then @dfr.resolve @files
 
                 @dfr.promise()
 
-            compile:(j)->
+            compile:(j, f)->
                 file = filesStorage.files[@files[j].key]
                 for name, value of @files[j]
                     patt = new RegExp "\\$#{name}", 'gi'
                     file = file.replace patt, value
 
                 $(@$tags[j]).replaceWith file
-                console.log '--->'
-                console.log @$destFile.html()
+                grunt.file.write f.dest+'aa.html', @$destFile.html() 
 
 
         filesChanged = new  FilesChanged 
