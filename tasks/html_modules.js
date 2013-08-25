@@ -87,6 +87,7 @@
             }).map(function(filepath) {
               return grunt.file.read(filepath);
             });
+            console.log(src);
             _results = [];
             for (z = _i = 0, _len = src.length; _i < _len; z = ++_i) {
               file = src[z];

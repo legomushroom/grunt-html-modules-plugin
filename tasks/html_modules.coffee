@@ -57,6 +57,7 @@ module.exports = (grunt) ->
                 filesStorage.readFiles().then (files)=>
                     @getFiles().then =>
 
+
             getFiles:->
                 @dfr = new $.Deferred
 
@@ -74,9 +75,10 @@ module.exports = (grunt) ->
                             true
                     ).map((filepath) ->
                         grunt.file.read filepath )
+
+                    console.log src
                     
                     for file, z in src
-
 
                         $destFile = $(file).wrap('<div>').parent()
                         @$destFile = $destFile
