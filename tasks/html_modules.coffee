@@ -42,11 +42,6 @@ module.exports = (grunt) ->
     # Please see the Grunt documentation for more information regarding task
     # creation: http://gruntjs.com/creating-tasks
     grunt.registerMultiTask "html_modules", "allows to include small html parts in other html", ->
-    
-        # Merge task-specific and/or target-specific options with these defaults.
-        options = @options
-            punctuation: "."
-            separator: ", "
 
         class FilesChanged 
             constructor:(o)->
@@ -64,42 +59,43 @@ module.exports = (grunt) ->
                 # Iterate over all specified file groups.
                 @o.files.forEach (f) =>
                     @f = f
-                    filepath = ''
-                    # Read file source.
+                    # check file source.
                     src = f.src.filter((filepath) ->
                         filepath = filepath
                         unless grunt.file.exists(filepath)
                             grunt.log.warn "Source file \"" + filepath + "\" not found."
                             false
-                        else
-                            true
-                    ).map((filepath) ->
-                        grunt.file.read filepath )
+                        else return true
+                    # Read file source.
+                    ).map (filepath) -> grunt.file.read filepath
 
-                    console.log src
-                    
                     for file, z in src
 
-                        $destFile = $(file).wrap('<div>').parent()
-                        @$destFile = $destFile
+                        @$destFile = @wrapFile file
+                        @$tags = @getTagsInFile @$destFile
                         
-                        $tags = $destFile.find('layout')
-                        @$tags = $tags
-                        
-                        for j in [0...$tags.length]
+                        # look thrue tags in file
+                        for tagNum in [0...@$tags.length]
                             @files[j] = {}
-                            for attr, i in $tags[j].attributes
+                            for attr, i in @$tags[j].attributes
                                 @files[j][attr.nodeName] = attr.nodeValue
 
 
                             @compile j, f
 
-                            if j is $tags[j].attributes.length-1 then @dfr.resolve @files
+                            if j is @$tags[j].attributes.length-1 then @dfr.resolve @files
                         
                         grunt.file.write "dest/#{@f.src[0]}", @$destFile.html() 
 
 
                 @dfr.promise()
+
+            wrapFile:($file)->
+                $(file).wrap('<div>').parent()
+
+            getTagsInFile:($file)->
+                $file.find('layout')
+
 
             compile:(j, f)->
                 file = filesStorage.files[@files[j].key]

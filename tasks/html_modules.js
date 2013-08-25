@@ -49,12 +49,8 @@
     })();
     filesStorage = new Files;
     return grunt.registerMultiTask("html_modules", "allows to include small html parts in other html", function() {
-      var FilesChanged, filesChanged, options;
+      var FilesChanged, filesChanged;
 
-      options = this.options({
-        punctuation: ".",
-        separator: ", "
-      });
       FilesChanged = (function() {
         function FilesChanged(o) {
           var _this = this;
@@ -72,10 +68,9 @@
 
           this.dfr = new $.Deferred;
           this.o.files.forEach(function(f) {
-            var $destFile, $tags, attr, file, filepath, i, j, src, z, _i, _j, _k, _len, _len1, _ref, _ref1, _results;
+            var attr, file, i, src, tagNum, z, _i, _j, _k, _len, _len1, _ref, _ref1, _results;
 
             _this.f = f;
-            filepath = '';
             src = f.src.filter(function(filepath) {
               filepath = filepath;
               if (!grunt.file.exists(filepath)) {
@@ -87,23 +82,20 @@
             }).map(function(filepath) {
               return grunt.file.read(filepath);
             });
-            console.log(src);
             _results = [];
             for (z = _i = 0, _len = src.length; _i < _len; z = ++_i) {
               file = src[z];
-              $destFile = $(file).wrap('<div>').parent();
-              _this.$destFile = $destFile;
-              $tags = $destFile.find('layout');
-              _this.$tags = $tags;
-              for (j = _j = 0, _ref = $tags.length; 0 <= _ref ? _j < _ref : _j > _ref; j = 0 <= _ref ? ++_j : --_j) {
+              _this.$destFile = _this.wrapFile(file);
+              _this.$tags = _this.getTagsInFile(_this.$destFile);
+              for (tagNum = _j = 0, _ref = _this.$tags.length; 0 <= _ref ? _j < _ref : _j > _ref; tagNum = 0 <= _ref ? ++_j : --_j) {
                 _this.files[j] = {};
-                _ref1 = $tags[j].attributes;
+                _ref1 = _this.$tags[j].attributes;
                 for (i = _k = 0, _len1 = _ref1.length; _k < _len1; i = ++_k) {
                   attr = _ref1[i];
                   _this.files[j][attr.nodeName] = attr.nodeValue;
                 }
                 _this.compile(j, f);
-                if (j === $tags[j].attributes.length - 1) {
+                if (j === _this.$tags[j].attributes.length - 1) {
                   _this.dfr.resolve(_this.files);
                 }
               }
@@ -112,6 +104,14 @@
             return _results;
           });
           return this.dfr.promise();
+        };
+
+        FilesChanged.prototype.wrapFile = function($file) {
+          return $(file).wrap('<div>').parent();
+        };
+
+        FilesChanged.prototype.getTagsInFile = function($file) {
+          return $file.find('layout');
         };
 
         FilesChanged.prototype.compile = function(j, f) {
