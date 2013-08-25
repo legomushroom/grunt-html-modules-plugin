@@ -46,16 +46,12 @@ module.exports = (grunt) ->
         class FilesChanged 
             constructor:(o)->
                 @o = o
-                @files = []
-                @compiled = ''
-
+                @jsonTags = []
+                
                 filesStorage.readFiles().then (files)=>
-                    @getFiles().then =>
-
+                    @getFiles()
 
             getFiles:->
-                @dfr = new $.Deferred
-
                 # Iterate over all specified file groups.
                 @o.files.forEach (f) =>
                     @f = f
@@ -68,42 +64,66 @@ module.exports = (grunt) ->
                         else return true
                     # Read file source.
                     ).map (filepath) -> grunt.file.read filepath
-
+                    
                     for file, z in src
-
-                        @$destFile = @wrapFile file
-                        @$tags = @getTagsInFile @$destFile
-                        
-                        # look thrue tags in file
-                        for tagNum in [0...@$tags.length]
-                            @files[j] = {}
-                            for attr, i in @$tags[j].attributes
-                                @files[j][attr.nodeName] = attr.nodeValue
+                        @renderFile
+                            file: file
+                            fileSrc: f
 
 
-                            @compile j, f
+            renderFile:(o)->
+                @$destFile  =   @wrapFile o.file
+                @$tags      =   @getTagsInFile @$destFile
+                @jsonTags   =   @getJSONTags 
+                                        tags: @$tags
+                                        # fileSrc: o.fileSrc
 
-                            if j is @$tags[j].attributes.length-1 then @dfr.resolve @files
-                        
-                        grunt.file.write "dest/#{@f.src[0]}", @$destFile.html() 
+                for jsonTag, tagNum in @jsonTags
+                    compiledFile = @compile 
+                            tagNum:     tagNum
+                            fileSrc:    o.fileSrc
+                            tags:       @$tags
 
 
-                @dfr.promise()
+                    if @wrapFile(compiledFile).find('layout').length > 0
+                        console.log 'then'
+                        console.log compiledFile
+                        @renderFile 
+                                file: compiledFile
+                                fileSrc: o.fileSrc
 
-            wrapFile:($file)->
+                    else 
+                        console.log 'else'
+                        console.log compiledFile
+                        $(@$tags[tagNum]).replaceWith compiledFile
+                        grunt.file.write "dest/#{o.fileSrc.src[0]}", @$destFile.html() 
+
+            getJSONTags:(o)->
+                jsonTags = []
+                for tagNum in [0...o.tags.length]
+                    #add new tags json record
+                    jsonTags[tagNum] = {}
+                    for attr, i in o.tags[tagNum].attributes
+                        jsonTags[tagNum][attr.nodeName] = attr.nodeValue
+
+                jsonTags
+
+            wrapFile:(file)->
                 $(file).wrap('<div>').parent()
 
             getTagsInFile:($file)->
                 $file.find('layout')
 
-
-            compile:(j, f)->
-                file = filesStorage.files[@files[j].key]
-                for name, value of @files[j]
+            compile:(o)->
+                file = filesStorage.files[@jsonTags[o.tagNum].key]
+                for name, value of @jsonTags[o.tagNum]
                     patt = new RegExp "\\$#{name}", 'gi'
                     file = file.replace patt, value
 
-                $(@$tags[j]).replaceWith file
+                file
+
+
+                
 
 
 

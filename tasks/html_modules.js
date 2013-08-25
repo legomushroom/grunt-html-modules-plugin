@@ -56,19 +56,17 @@
           var _this = this;
 
           this.o = o;
-          this.files = [];
-          this.compiled = '';
+          this.jsonTags = [];
           filesStorage.readFiles().then(function(files) {
-            return _this.getFiles().then(function() {});
+            return _this.getFiles();
           });
         }
 
         FilesChanged.prototype.getFiles = function() {
           var _this = this;
 
-          this.dfr = new $.Deferred;
-          this.o.files.forEach(function(f) {
-            var attr, file, i, src, tagNum, z, _i, _j, _k, _len, _len1, _ref, _ref1, _results;
+          return this.o.files.forEach(function(f) {
+            var file, src, z, _i, _len, _results;
 
             _this.f = f;
             src = f.src.filter(function(filepath) {
@@ -85,28 +83,65 @@
             _results = [];
             for (z = _i = 0, _len = src.length; _i < _len; z = ++_i) {
               file = src[z];
-              _this.$destFile = _this.wrapFile(file);
-              _this.$tags = _this.getTagsInFile(_this.$destFile);
-              for (tagNum = _j = 0, _ref = _this.$tags.length; 0 <= _ref ? _j < _ref : _j > _ref; tagNum = 0 <= _ref ? ++_j : --_j) {
-                _this.files[j] = {};
-                _ref1 = _this.$tags[j].attributes;
-                for (i = _k = 0, _len1 = _ref1.length; _k < _len1; i = ++_k) {
-                  attr = _ref1[i];
-                  _this.files[j][attr.nodeName] = attr.nodeValue;
-                }
-                _this.compile(j, f);
-                if (j === _this.$tags[j].attributes.length - 1) {
-                  _this.dfr.resolve(_this.files);
-                }
-              }
-              _results.push(grunt.file.write("dest/" + _this.f.src[0], _this.$destFile.html()));
+              _results.push(_this.renderFile({
+                file: file,
+                fileSrc: f
+              }));
             }
             return _results;
           });
-          return this.dfr.promise();
         };
 
-        FilesChanged.prototype.wrapFile = function($file) {
+        FilesChanged.prototype.renderFile = function(o) {
+          var compiledFile, jsonTag, tagNum, _i, _len, _ref, _results;
+
+          this.$destFile = this.wrapFile(o.file);
+          this.$tags = this.getTagsInFile(this.$destFile);
+          this.jsonTags = this.getJSONTags({
+            tags: this.$tags
+          });
+          _ref = this.jsonTags;
+          _results = [];
+          for (tagNum = _i = 0, _len = _ref.length; _i < _len; tagNum = ++_i) {
+            jsonTag = _ref[tagNum];
+            compiledFile = this.compile({
+              tagNum: tagNum,
+              fileSrc: o.fileSrc,
+              tags: this.$tags
+            });
+            if (this.wrapFile(compiledFile).find('layout').length > 0) {
+              console.log('then');
+              console.log(compiledFile);
+              _results.push(this.renderFile({
+                file: compiledFile,
+                fileSrc: o.fileSrc
+              }));
+            } else {
+              console.log('else');
+              console.log(compiledFile);
+              $(this.$tags[tagNum]).replaceWith(compiledFile);
+              _results.push(grunt.file.write("dest/" + o.fileSrc.src[0], this.$destFile.html()));
+            }
+          }
+          return _results;
+        };
+
+        FilesChanged.prototype.getJSONTags = function(o) {
+          var attr, i, jsonTags, tagNum, _i, _j, _len, _ref, _ref1;
+
+          jsonTags = [];
+          for (tagNum = _i = 0, _ref = o.tags.length; 0 <= _ref ? _i < _ref : _i > _ref; tagNum = 0 <= _ref ? ++_i : --_i) {
+            jsonTags[tagNum] = {};
+            _ref1 = o.tags[tagNum].attributes;
+            for (i = _j = 0, _len = _ref1.length; _j < _len; i = ++_j) {
+              attr = _ref1[i];
+              jsonTags[tagNum][attr.nodeName] = attr.nodeValue;
+            }
+          }
+          return jsonTags;
+        };
+
+        FilesChanged.prototype.wrapFile = function(file) {
           return $(file).wrap('<div>').parent();
         };
 
@@ -114,17 +149,17 @@
           return $file.find('layout');
         };
 
-        FilesChanged.prototype.compile = function(j, f) {
+        FilesChanged.prototype.compile = function(o) {
           var file, name, patt, value, _ref;
 
-          file = filesStorage.files[this.files[j].key];
-          _ref = this.files[j];
+          file = filesStorage.files[this.jsonTags[o.tagNum].key];
+          _ref = this.jsonTags[o.tagNum];
           for (name in _ref) {
             value = _ref[name];
             patt = new RegExp("\\$" + name, 'gi');
             file = file.replace(patt, value);
           }
-          return $(this.$tags[j]).replaceWith(file);
+          return file;
         };
 
         return FilesChanged;
