@@ -72,31 +72,22 @@ module.exports = (grunt) ->
 
 
             renderFile:(o)->
-                @$destFile  =   @wrapFile o.file
-                @$tags      =   @getTagsInFile @$destFile
+                $destFile   =   @wrapFile o.file
+                $tags       =   @getTagsInFile $destFile
                 @jsonTags   =   @getJSONTags 
-                                        tags: @$tags
+                                        tags: $tags
                                         # fileSrc: o.fileSrc
-
+                # loop thrue json tags
                 for jsonTag, tagNum in @jsonTags
-                    compiledFile = @compile 
+                    #complie tag
+                    compiledTag = @compileTag 
                             tagNum:     tagNum
                             fileSrc:    o.fileSrc
-                            tags:       @$tags
+                            $tag:       $tags[tagNum]
+                            $destFile:  $destFile
 
-
-                    if @wrapFile(compiledFile).find('layout').length > 0
-                        console.log 'then'
-                        console.log compiledFile
-                        @renderFile 
-                                file: compiledFile
-                                fileSrc: o.fileSrc
-
-                    else 
-                        console.log 'else'
-                        console.log compiledFile
-                        $(@$tags[tagNum]).replaceWith compiledFile
-                        grunt.file.write "dest/#{o.fileSrc.src[0]}", @$destFile.html() 
+                console.log 'new'
+                console.log $destFile.html()
 
             getJSONTags:(o)->
                 jsonTags = []
@@ -114,13 +105,21 @@ module.exports = (grunt) ->
             getTagsInFile:($file)->
                 $file.find('layout')
 
-            compile:(o)->
-                file = filesStorage.files[@jsonTags[o.tagNum].key]
+            compileTag:(o)->
+                tag = filesStorage.files[@jsonTags[o.tagNum].key]
                 for name, value of @jsonTags[o.tagNum]
                     patt = new RegExp "\\$#{name}", 'gi'
-                    file = file.replace patt, value
+                    tag = tag.replace patt, value
+                    $tag = $(tag)
+                
+                $(o.$tag).replaceWith $tag
 
-                file
+                if $tag.find('layout').length > 0
+                    console.log 'si!'
+                    @renderFile 
+                        file: o.$destFile.html()
+                        fileSrc: o.fileSrc
+                tag
 
 
                 

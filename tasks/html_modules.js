@@ -93,37 +93,25 @@
         };
 
         FilesChanged.prototype.renderFile = function(o) {
-          var compiledFile, jsonTag, tagNum, _i, _len, _ref, _results;
+          var $destFile, $tags, compiledTag, jsonTag, tagNum, _i, _len, _ref;
 
-          this.$destFile = this.wrapFile(o.file);
-          this.$tags = this.getTagsInFile(this.$destFile);
+          $destFile = this.wrapFile(o.file);
+          $tags = this.getTagsInFile($destFile);
           this.jsonTags = this.getJSONTags({
-            tags: this.$tags
+            tags: $tags
           });
           _ref = this.jsonTags;
-          _results = [];
           for (tagNum = _i = 0, _len = _ref.length; _i < _len; tagNum = ++_i) {
             jsonTag = _ref[tagNum];
-            compiledFile = this.compile({
+            compiledTag = this.compileTag({
               tagNum: tagNum,
               fileSrc: o.fileSrc,
-              tags: this.$tags
+              $tag: $tags[tagNum],
+              $destFile: $destFile
             });
-            if (this.wrapFile(compiledFile).find('layout').length > 0) {
-              console.log('then');
-              console.log(compiledFile);
-              _results.push(this.renderFile({
-                file: compiledFile,
-                fileSrc: o.fileSrc
-              }));
-            } else {
-              console.log('else');
-              console.log(compiledFile);
-              $(this.$tags[tagNum]).replaceWith(compiledFile);
-              _results.push(grunt.file.write("dest/" + o.fileSrc.src[0], this.$destFile.html()));
-            }
           }
-          return _results;
+          console.log('new');
+          return console.log($destFile.html());
         };
 
         FilesChanged.prototype.getJSONTags = function(o) {
@@ -149,17 +137,26 @@
           return $file.find('layout');
         };
 
-        FilesChanged.prototype.compile = function(o) {
-          var file, name, patt, value, _ref;
+        FilesChanged.prototype.compileTag = function(o) {
+          var $tag, name, patt, tag, value, _ref;
 
-          file = filesStorage.files[this.jsonTags[o.tagNum].key];
+          tag = filesStorage.files[this.jsonTags[o.tagNum].key];
           _ref = this.jsonTags[o.tagNum];
           for (name in _ref) {
             value = _ref[name];
             patt = new RegExp("\\$" + name, 'gi');
-            file = file.replace(patt, value);
+            tag = tag.replace(patt, value);
+            $tag = $(tag);
           }
-          return file;
+          $(o.$tag).replaceWith($tag);
+          if ($tag.find('layout').length > 0) {
+            console.log('si!');
+            this.renderFile({
+              file: o.$destFile.html(),
+              fileSrc: o.fileSrc
+            });
+          }
+          return tag;
         };
 
         return FilesChanged;
