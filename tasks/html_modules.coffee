@@ -7,9 +7,17 @@
 # 
 "use strict"
 
+# console.log path.basename(o.fileSrc.src, '.html')
+# console.log @jsonTags[tagNum].key
+# if path.basename(o.fileSrc.src, '.html') is @jsonTags[tagNum].key
+    # console.log 'is!!'
+    # break
+#complie tag
+
 module.exports = (grunt) ->
     fs      = require 'fs'
     $       = require 'jquery'
+    path    = require 'path'
 
     data = {}
     class Files
@@ -26,10 +34,10 @@ module.exports = (grunt) ->
                 if err then throw err;
                 files = @getValidFiles files
                 files.forEach (file, i)=>
-                    console.log file
+                    fileName = file.split('.html')[0]
                     fs.readFile @dir+file, 'utf-8', (err, html)=>
                         err and (throw err)
-                        @files[file.split('.')[0]] = html
+                        @files[fileName] = html
                         if i is files.length-1 then @dfr.resolve @files
 
             @dfr.promise()
@@ -70,8 +78,7 @@ module.exports = (grunt) ->
                         newFile = @renderFile
                             file: file
                             fileSrc: f
-                        grunt.file.write "dest/#{f.src[0]}", newFile
-                        console.log newFile
+                        grunt.file.write "dest/#{f.src[z]}", newFile
 
 
             renderFile:(o)->
@@ -79,19 +86,20 @@ module.exports = (grunt) ->
                 $tags       =   @getTagsInFile $destFile
                 @jsonTags   =   @getJSONTags 
                                         tags: $tags
-                                        # fileSrc: o.fileSrc
+                                        parent: o.parent
                 # loop thrue json tags
                 for jsonTag, tagNum in @jsonTags
-                    #complie tag
                     compiledTag = @compileTag 
                             tagNum:     tagNum
                             fileSrc:    o.fileSrc
                             $tag:       $tags[tagNum]
 
+
                 if @getTagsInFile($destFile).length > 0
                     return @renderFile 
                         file: $destFile.html()
                         fileSrc: o.fileSrc
+                        # parent: 
 
                 $destFile.html()
 
@@ -102,6 +110,7 @@ module.exports = (grunt) ->
                     jsonTags[tagNum] = {}
                     for attr, i in o.tags[tagNum].attributes
                         jsonTags[tagNum][attr.nodeName] = attr.nodeValue
+                        jsonTags[tagNum]['parentName']  = o.parent
 
                 jsonTags
 
