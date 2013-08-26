@@ -7,18 +7,11 @@
 # 
 "use strict"
 
-# console.log path.basename(o.fileSrc.src, '.html')
-# console.log @jsonTags[tagNum].key
-# if path.basename(o.fileSrc.src, '.html') is @jsonTags[tagNum].key
-    # console.log 'is!!'
-    # break
-#complie tag
-
 module.exports = (grunt) ->
     fs      = require 'fs'
     $       = require 'jquery'
-    path    = require 'path'
-    _       = require 'lodash'
+    # path    = require 'path'
+    # _       = require 'lodash'
     html    = require 'html'
 
     data = {}
