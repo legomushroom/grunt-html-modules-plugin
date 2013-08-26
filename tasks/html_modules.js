@@ -101,20 +101,22 @@
         };
 
         FilesChanged.prototype.renderFile = function(o) {
-          var $destFile, $tags;
+          var $destFile, $tags, _base, _name, _ref;
 
           this.trail = o.trail || [];
           $destFile = this.wrapFile(o.file);
           $tags = this.getTagsInFile($destFile);
+          if ((_ref = (_base = this.trail)[_name = o.i]) == null) {
+            _base[_name] = [];
+          }
           this.compileTags({
-            $tags: $tags,
-            i: o.i
+            $tags: $tags
           });
           if (this.getTagsInFile($destFile).length > 0) {
             return this.renderFile({
               file: $destFile.html(),
               fileSrc: o.fileSrc,
-              i: o.i,
+              i: ++o.i,
               trail: this.trail
             });
           }
@@ -122,41 +124,23 @@
         };
 
         FilesChanged.prototype.compileTags = function(o) {
-          var compiledTag, jsonTag, tagNum, _i, _len, _ref, _results;
+          var compiledTag, jsonTag, tagNum, _i, _len, _ref;
 
           this.jsonTags = this.getJSONTags({
             tags: o.$tags,
-            parent: o.parent,
-            i: o.i
+            parent: o.parent
           });
-          this.checkTrailLoop(o.i);
+          this.checkTrailLoop();
           _ref = this.jsonTags;
-          _results = [];
           for (tagNum = _i = 0, _len = _ref.length; _i < _len; tagNum = ++_i) {
             jsonTag = _ref[tagNum];
-            _results.push(compiledTag = this.compileTag({
+            compiledTag = this.compileTag({
               tagNum: tagNum,
               fileSrc: o.fileSrc,
               $tag: o.$tags[tagNum]
-            }));
+            });
           }
-          return _results;
-        };
-
-        FilesChanged.prototype.checkTrailLoop = function(i) {
-          var trail, _i, _len, _ref, _results;
-
-          console.log(this.trail);
-          this.trail = _.compact(this.trail);
-          _ref = this.trail;
-          _results = [];
-          for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-            trail = _ref[i];
-            console.log('trail ----->');
-            console.log(trail);
-            _results.push(console.log(trail.childs));
-          }
-          return _results;
+          return this.jsonTags;
         };
 
         FilesChanged.prototype.compileTag = function(o) {
@@ -182,7 +166,7 @@
         };
 
         FilesChanged.prototype.getJSONTags = function(o) {
-          var attr, i, jsonTags, tagNum, _base, _i, _j, _len, _ref, _ref1, _ref2;
+          var attr, i, jsonTags, tagNum, _i, _j, _len, _ref, _ref1;
 
           jsonTags = [];
           for (tagNum = _i = 0, _ref = o.tags.length; 0 <= _ref ? _i < _ref : _i > _ref; tagNum = 0 <= _ref ? ++_i : --_i) {
@@ -194,15 +178,44 @@
               jsonTags[tagNum]['parentName'] = o.parent;
             }
             if (o.parent) {
-              this.trail[o.i] = {};
-              this.trail[o.i].parent = o.parent;
-              if ((_ref2 = (_base = this.trail[o.i]).childs) == null) {
-                _base.childs = [];
-              }
-              this.trail[o.i].childs.push(jsonTags[tagNum].key);
+              this.trail.push({});
+              this.trail[this.trail.length - 1].parent = o.parent;
+              this.trail[this.trail.length - 1].childs = [];
+              this.trail[this.trail.length - 1].childs.push(jsonTags[tagNum].key);
             }
           }
           return jsonTags;
+        };
+
+        FilesChanged.prototype.checkTrailLoop = function() {
+          var i, trail, _i, _len, _ref, _results;
+
+          console.log('-=-=-=-');
+          _ref = this.trail;
+          _results = [];
+          for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+            trail = _ref[i];
+            _results.push(this.getParents(i));
+          }
+          return _results;
+        };
+
+        FilesChanged.prototype.getParents = function(i) {
+          var j, parents;
+
+          console.log(this.trail[i]);
+          parents = (function() {
+            var _i, _results;
+
+            _results = [];
+            for (j = _i = 0; 0 <= i ? _i <= i : _i >= i; j = 0 <= i ? ++_i : --_i) {
+              _results.push(this.trail[j].parent);
+            }
+            return _results;
+          }).call(this);
+          parents = _.compact(parents);
+          parents = _.uniq(parents);
+          return console.log(parents);
         };
 
         FilesChanged.prototype.wrapFile = function(file) {
