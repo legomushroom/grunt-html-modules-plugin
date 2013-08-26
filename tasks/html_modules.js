@@ -98,30 +98,57 @@
         };
 
         FilesChanged.prototype.renderFile = function(o) {
-          var $destFile, $tags, compiledTag, jsonTag, tagNum, _i, _len, _ref;
+          var $destFile, $tags;
 
           $destFile = this.wrapFile(o.file);
           $tags = this.getTagsInFile($destFile);
+          this.compileTags({
+            $tags: $tags
+          });
+          return $destFile.html();
+        };
+
+        FilesChanged.prototype.compileTags = function(o) {
+          var compiledTag, jsonTag, tagNum, _i, _len, _ref, _results;
+
+          console.log('compile tags');
           this.jsonTags = this.getJSONTags({
-            tags: $tags,
+            tags: o.$tags,
             parent: o.parent
           });
           _ref = this.jsonTags;
+          _results = [];
           for (tagNum = _i = 0, _len = _ref.length; _i < _len; tagNum = ++_i) {
             jsonTag = _ref[tagNum];
-            compiledTag = this.compileTag({
+            _results.push(compiledTag = this.compileTag({
               tagNum: tagNum,
               fileSrc: o.fileSrc,
-              $tag: $tags[tagNum]
+              $tag: o.$tags[tagNum]
+            }));
+          }
+          return _results;
+        };
+
+        FilesChanged.prototype.compileTag = function(o) {
+          var $dest, $tags, name, patt, tag, value, _ref;
+
+          tag = filesStorage.files[this.jsonTags[o.tagNum].key];
+          _ref = this.jsonTags[o.tagNum];
+          for (name in _ref) {
+            value = _ref[name];
+            patt = new RegExp("\\$" + name, 'gi');
+            tag = tag.replace(patt, value);
+          }
+          $(o.$tag).replaceWith(tag);
+          $dest = this.wrapFile(tag);
+          $tags = this.getTagsInFile($dest);
+          if ($tags.length) {
+            this.compileTags({
+              $tags: $tags,
+              parent: this.jsonTags[o.tagNum].key
             });
           }
-          if (this.getTagsInFile($destFile).length > 0) {
-            return this.renderFile({
-              file: $destFile.html(),
-              fileSrc: o.fileSrc
-            });
-          }
-          return $destFile.html();
+          return tag;
         };
 
         FilesChanged.prototype.getJSONTags = function(o) {
@@ -137,21 +164,8 @@
               jsonTags[tagNum]['parentName'] = o.parent;
             }
           }
+          console.log(jsonTags);
           return jsonTags;
-        };
-
-        FilesChanged.prototype.compileTag = function(o) {
-          var name, patt, tag, value, _ref;
-
-          tag = filesStorage.files[this.jsonTags[o.tagNum].key];
-          _ref = this.jsonTags[o.tagNum];
-          for (name in _ref) {
-            value = _ref[name];
-            patt = new RegExp("\\$" + name, 'gi');
-            tag = tag.replace(patt, value);
-          }
-          $(o.$tag).replaceWith(tag);
-          return tag;
         };
 
         FilesChanged.prototype.wrapFile = function(file) {

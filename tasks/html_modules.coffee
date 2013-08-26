@@ -84,25 +84,50 @@ module.exports = (grunt) ->
             renderFile:(o)->
                 $destFile   =   @wrapFile o.file
                 $tags       =   @getTagsInFile $destFile
+
+                @compileTags 
+                        $tags: $tags
+
+
+                # if @getTagsInFile($destFile).length > 0
+                #     return @renderFile 
+                #         file: $destFile.html()
+                #         fileSrc: o.fileSrc
+                        # parent: 
+
+                $destFile.html()
+
+            compileTags:(o)->
+                console.log 'compile tags'
+
                 @jsonTags   =   @getJSONTags 
-                                        tags: $tags
+                                        tags: o.$tags
                                         parent: o.parent
                 # loop thrue json tags
                 for jsonTag, tagNum in @jsonTags
                     compiledTag = @compileTag 
                             tagNum:     tagNum
                             fileSrc:    o.fileSrc
-                            $tag:       $tags[tagNum]
+                            $tag:       o.$tags[tagNum]
 
 
-                if @getTagsInFile($destFile).length > 0
-                    return @renderFile 
-                        file: $destFile.html()
-                        fileSrc: o.fileSrc
-                        # parent: 
+            compileTag:(o)->
+                tag = filesStorage.files[@jsonTags[o.tagNum].key]
+                # replace variables
+                for name, value of @jsonTags[o.tagNum]
+                    patt = new RegExp "\\$#{name}", 'gi'
+                    tag = tag.replace patt, value
 
-                $destFile.html()
+                $(o.$tag).replaceWith tag
 
+                $dest = @wrapFile tag
+                $tags = @getTagsInFile $dest
+                if $tags.length 
+                    @compileTags 
+                        $tags: $tags
+                        parent: @jsonTags[o.tagNum].key
+                tag
+            
             getJSONTags:(o)->
                 jsonTags = []
                 for tagNum in [0...o.tags.length]
@@ -112,18 +137,8 @@ module.exports = (grunt) ->
                         jsonTags[tagNum][attr.nodeName] = attr.nodeValue
                         jsonTags[tagNum]['parentName']  = o.parent
 
+                console.log jsonTags
                 jsonTags
-
-            compileTag:(o)->
-                tag = filesStorage.files[@jsonTags[o.tagNum].key]
-                # replace variables
-                for name, value of @jsonTags[o.tagNum]
-                    patt = new RegExp "\\$#{name}", 'gi'
-                    tag = tag.replace patt, value
-                
-                $(o.$tag).replaceWith tag
-
-                tag
 
             wrapFile:(file)->
                 $(file).wrap('<div>').parent()
