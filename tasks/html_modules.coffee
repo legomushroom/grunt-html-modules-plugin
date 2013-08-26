@@ -18,6 +18,7 @@ module.exports = (grunt) ->
     fs      = require 'fs'
     $       = require 'jquery'
     path    = require 'path'
+    _       = require 'lodash'
 
     data = {}
     class Files
@@ -81,8 +82,6 @@ module.exports = (grunt) ->
                             fileSrc: f
                             i: z
 
-                        console.log @trail
-
                         grunt.file.write "dest/#{f.src[z]}", newFile
 
 
@@ -92,15 +91,16 @@ module.exports = (grunt) ->
                 $destFile   =   @wrapFile o.file
                 $tags       =   @getTagsInFile $destFile
 
-                @trail[o.i] = []
+                
                 @compileTags 
                         $tags: $tags
+                        i: o.i
 
                 if @getTagsInFile($destFile).length > 0
                     return @renderFile 
                         file: $destFile.html()
                         fileSrc: o.fileSrc
-                        i: ++o.i
+                        i: o.i
                         trail: @trail
 
                 $destFile.html()
@@ -109,6 +109,10 @@ module.exports = (grunt) ->
                 @jsonTags   =   @getJSONTags 
                                         tags: o.$tags
                                         parent: o.parent
+                                        i: o.i
+
+                @checkTrailLoop o.i
+
                 # loop thrue json tags
                 for jsonTag, tagNum in @jsonTags
                     compiledTag = @compileTag 
@@ -116,7 +120,22 @@ module.exports = (grunt) ->
                             fileSrc:    o.fileSrc
                             $tag:       o.$tags[tagNum]
 
-                @jsonTags
+            checkTrailLoop:(i)->
+                console.log @trail
+                @trail = _.compact @trail
+                for trail, i in @trail
+                    console.log 'trail ----->'
+                    console.log trail
+                    console.log trail.childs
+                    # for child, j in trail.childs
+                    #     console.log "child #{child} got parent #{trail.parent}"
+                    #     console.log @trail.parent
+
+                #     console.log "#{trail.parent} got #{trail.childs}"
+
+                    # for key, value of trail
+                        # console.log key
+                #         console.log value
 
 
             compileTag:(o)->
@@ -148,14 +167,15 @@ module.exports = (grunt) ->
                         jsonTags[tagNum]['parentName']  = o.parent
                     
                     if o.parent 
-                        @trail[@trail.length-1][o.parent] ?= []
-                        @trail[@trail.length-1][o.parent].push jsonTags[tagNum].key
+                        @trail[o.i] = {}
+                        @trail[o.i].parent = o.parent
+                        @trail[o.i].childs ?= []
+                        @trail[o.i].childs.push jsonTags[tagNum].key
 
-                        @checkTrailLoop()
                 jsonTags
 
-            checkTrailLoop:->
-                
+            
+
 
             wrapFile:(file)->
                 $(file).wrap('<div>').parent()

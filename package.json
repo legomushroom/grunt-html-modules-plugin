@@ -33,6 +33,7 @@
     "grunt-contrib-clean": "~0.4.0",
     "node-fs": "~0.1.7",
     "jquery-deferred": "*",
+    "lodash": "*",
     "jquery":"*",
     "path": "~0.4.9",
     "grunt-contrib-nodeunit": "~0.2.0",
