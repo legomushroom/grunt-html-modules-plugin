@@ -19,6 +19,7 @@ module.exports = (grunt) ->
     $       = require 'jquery'
     path    = require 'path'
     _       = require 'lodash'
+    html    = require 'html'
 
     data = {}
     class Files
@@ -80,7 +81,7 @@ module.exports = (grunt) ->
                             file: file
                             fileSrc: f
 
-                        grunt.file.write "dest/#{f.src[z]}", newFile
+                        grunt.file.write "dest/#{f.src[z]}", html.prettyPrint(newFile)
 
 
             renderFile:(o)->
@@ -124,11 +125,9 @@ module.exports = (grunt) ->
 
                 $dest = @wrapFile tag
                 $tags = @getTagsInFile $dest
-                
-                if $tags.length
-                    jsonTags = @getJSONTags
-                            tags: $tags
-                            parent: @jsonTags[o.tagNum].key
+                # if $tags.length
+                #     jsonTags = @getJSONTags
+                #             tags: $tags
                 tag
             
             getJSONTags:(o)->
