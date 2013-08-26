@@ -136,7 +136,7 @@
         };
 
         FilesChanged.prototype.compileTag = function(o) {
-          var $dest, $tags, name, patt, tag, value, _ref;
+          var name, patt, tag, value, _ref;
 
           tag = filesStorage.files[this.jsonTags[o.tagNum].key];
           _ref = this.jsonTags[o.tagNum];
@@ -146,8 +146,6 @@
             tag = tag != null ? tag.replace(patt, value) : void 0;
           }
           $(o.$tag).replaceWith(tag);
-          $dest = this.wrapFile(tag);
-          $tags = this.getTagsInFile($dest);
           return tag;
         };
 

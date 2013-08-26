@@ -115,7 +115,6 @@ module.exports = (grunt) ->
 
             compileTag:(o)->
                 tag = filesStorage.files[@jsonTags[o.tagNum].key]
-
                 # replace variables
                 for name, value of @jsonTags[o.tagNum]
                     patt = new RegExp "\\$#{name}", 'gi'
@@ -123,8 +122,8 @@ module.exports = (grunt) ->
 
                 $(o.$tag).replaceWith tag
 
-                $dest = @wrapFile tag
-                $tags = @getTagsInFile $dest
+                # $dest = @wrapFile tag
+                # $tags = @getTagsInFile $dest
                 # if $tags.length
                 #     jsonTags = @getJSONTags
                 #             tags: $tags
