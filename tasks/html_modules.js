@@ -61,10 +61,6 @@
           var _this = this;
 
           this.o = o;
-          this.trail = [];
-          this.trails = [];
-          this.curTrail = 0;
-          this.prevTrail = -1;
           filesStorage.readFiles().then(function(files) {
             return _this.getFiles();
           });
@@ -111,30 +107,19 @@
         };
 
         FilesChanged.prototype.compileTags = function(o) {
-          var $tag, compiledTag, i, jsonTag, trail, _i, _len, _ref, _results;
+          var $tag, compiledTag, i, jsonTag, _i, _len, _ref, _results;
 
-          trail = o.trail || [];
           _ref = o.$tags;
           _results = [];
           for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
             $tag = _ref[i];
             jsonTag = this.getJSONTags({
-              tag: $tag,
-              parent: o.parent
+              tag: $tag
             });
-            this.trails[i] = '';
-            this.curTrail = this.trails.length;
-            if (this.curTrail > this.prevTrail) {
-              this.prevTrail = this.curTrail;
-              trail.length = 0;
-            }
-            compiledTag = this.compileTag({
+            _results.push(compiledTag = this.compileTag({
               $tag: $tag,
-              jsonTag: jsonTag,
-              trail: trail
-            });
-            console.log(this.curTrail);
-            _results.push(console.log(trail));
+              jsonTag: jsonTag
+            }));
           }
           return _results;
         };
@@ -142,10 +127,6 @@
         FilesChanged.prototype.compileTag = function(o) {
           var $dest, $tags, name, patt, tag, value, _ref;
 
-          if (o.trail.indexOf(o.jsonTag.key) !== -1) {
-            console.error('error');
-          }
-          o.trail.push(o.jsonTag.key);
           tag = filesStorage.files[o.jsonTag.key];
           _ref = o.jsonTag;
           for (name in _ref) {
@@ -156,12 +137,9 @@
           $(o.$tag).replaceWith(tag);
           $dest = this.wrapFile(tag);
           $tags = this.getTagsInFile($dest);
-          if ($tags.length) {
-            this.compileTags({
-              $tags: $tags,
-              trail: o.trail
-            });
-          }
+          $tags.length && this.compileTags({
+            $tags: $tags
+          });
           return tag;
         };
 
@@ -173,7 +151,6 @@
           for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
             attr = _ref[i];
             jsonTag[attr.nodeName] = attr.nodeValue;
-            jsonTag['parentName'] = o.parent;
           }
           return jsonTag;
         };

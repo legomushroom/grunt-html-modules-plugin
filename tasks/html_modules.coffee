@@ -56,10 +56,6 @@ module.exports = (grunt) ->
         class FilesChanged 
             constructor:(o)->
                 @o = o
-                @trail = []
-                @trails = []
-                @curTrail = 0
-                @prevTrail = -1
                 filesStorage.readFiles().then (files)=>
                     @getFiles()
 
@@ -93,36 +89,17 @@ module.exports = (grunt) ->
 
 
             compileTags:(o)->
-                trail = o.trail or []
-
+                
                 for $tag, i in o.$tags
                     jsonTag  =  @getJSONTags 
                                         tag: $tag
-                                        parent: o.parent
-
-                    @trails[i] = ''
-                    @curTrail = @trails.length
-
-                    if @curTrail > @prevTrail
-                        @prevTrail = @curTrail
-                        trail.length = 0
 
                     compiledTag = @compileTag 
                             $tag:       $tag
                             jsonTag:    jsonTag
-                            trail:      trail
-
-                    console.log @curTrail
-                    console.log trail
-
-
 
 
             compileTag:(o)->
-                if o.trail.indexOf(o.jsonTag.key) isnt -1
-                    console.error 'error'
-
-                o.trail.push o.jsonTag.key
                 tag = filesStorage.files[o.jsonTag.key]
 
                 # replace variables
@@ -134,18 +111,14 @@ module.exports = (grunt) ->
 
                 $dest = @wrapFile tag
                 $tags = @getTagsInFile $dest
-                if $tags.length
-                    @compileTags 
-                        $tags: $tags
-                        trail: o.trail
-
+                $tags.length and @compileTags 
+                                    $tags: $tags
                 tag
 
             getJSONTags:(o)->
                 jsonTag = {}
                 for attr, i in o.tag.attributes
                     jsonTag[attr.nodeName] = attr.nodeValue
-                    jsonTag['parentName']  = o.parent
 
                 jsonTag
 
