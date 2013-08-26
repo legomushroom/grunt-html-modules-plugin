@@ -149,6 +149,8 @@ module.exports = (grunt) ->
                     for attr, i in o.tags[tagNum].attributes
                         jsonTags[tagNum][attr.nodeName] = attr.nodeValue
                         jsonTags[tagNum]['parentName']  = o.parent
+
+                    console.log jsonTags[tagNum].key
                     
                     # if o.parent 
                     #     @trail.push {}

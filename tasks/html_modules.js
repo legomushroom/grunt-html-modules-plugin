@@ -172,6 +172,7 @@
               jsonTags[tagNum][attr.nodeName] = attr.nodeValue;
               jsonTags[tagNum]['parentName'] = o.parent;
             }
+            console.log(jsonTags[tagNum].key);
           }
           return jsonTags;
         };
