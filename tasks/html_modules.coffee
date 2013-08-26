@@ -86,12 +86,12 @@ module.exports = (grunt) ->
 
 
             renderFile:(o)->
-                @trail = o.trail or []
+                # @trail = o.trail or []
 
                 $destFile   =   @wrapFile o.file
                 $tags       =   @getTagsInFile $destFile
 
-                @trail[o.i] ?= []
+                # @trail[o.i] ?= []
                 @compileTags 
                         $tags: $tags
 
@@ -109,7 +109,7 @@ module.exports = (grunt) ->
                                         tags: o.$tags
                                         parent: o.parent
 
-                @checkTrailLoop()
+                # @checkTrailLoop()
 
                 # loop thrue json tags
                 for jsonTag, tagNum in @jsonTags
@@ -123,10 +123,11 @@ module.exports = (grunt) ->
 
             compileTag:(o)->
                 tag = filesStorage.files[@jsonTags[o.tagNum].key]
+
                 # replace variables
                 for name, value of @jsonTags[o.tagNum]
                     patt = new RegExp "\\$#{name}", 'gi'
-                    tag = tag.replace patt, value
+                    tag = tag?.replace patt, value
 
                 $(o.$tag).replaceWith tag
 
@@ -149,29 +150,27 @@ module.exports = (grunt) ->
                         jsonTags[tagNum][attr.nodeName] = attr.nodeValue
                         jsonTags[tagNum]['parentName']  = o.parent
                     
-                    if o.parent 
-                        @trail.push {}
-                        @trail[@trail.length-1].parent = o.parent
-                        @trail[@trail.length-1].childs = []
-                        @trail[@trail.length-1].childs.push jsonTags[tagNum].key
-                        # @trail[@trail.length-1][o.parent].push jsonTags[tagNum].key
+                    # if o.parent 
+                    #     @trail.push {}
+                    #     @trail[@trail.length-1].parent = o.parent
+                    #     @trail[@trail.length-1].childs = []
+                    #     @trail[@trail.length-1].childs.push jsonTags[tagNum].key
 
                 jsonTags
 
-            checkTrailLoop:->
-                console.log '-=-=-=-'
-                for trail, i in @trail
-                    @getParents i
+            # checkTrailLoop:->
+            #     console.log '-=-=-=-'
+            #     for trail, i in @trail
+            #         @getParents i
 
-            getParents:(i)->
-                console.log @trail[i]
-                parents = for j in [0..i]
-                    @trail[j].parent
+            # getParents:(i)->
+            #     parents = for j in [0..i]
+            #         @trail[j].parent
 
-                parents = _.compact parents
-                parents = _.uniq parents
+            #     parents = _.compact parents
+            #     parents = _.uniq parents
 
-                console.log parents
+            #     console.log parents
 
 
 

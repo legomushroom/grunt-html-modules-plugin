@@ -101,14 +101,10 @@
         };
 
         FilesChanged.prototype.renderFile = function(o) {
-          var $destFile, $tags, _base, _name, _ref;
+          var $destFile, $tags;
 
-          this.trail = o.trail || [];
           $destFile = this.wrapFile(o.file);
           $tags = this.getTagsInFile($destFile);
-          if ((_ref = (_base = this.trail)[_name = o.i]) == null) {
-            _base[_name] = [];
-          }
           this.compileTags({
             $tags: $tags
           });
@@ -130,7 +126,6 @@
             tags: o.$tags,
             parent: o.parent
           });
-          this.checkTrailLoop();
           _ref = this.jsonTags;
           for (tagNum = _i = 0, _len = _ref.length; _i < _len; tagNum = ++_i) {
             jsonTag = _ref[tagNum];
@@ -151,7 +146,7 @@
           for (name in _ref) {
             value = _ref[name];
             patt = new RegExp("\\$" + name, 'gi');
-            tag = tag.replace(patt, value);
+            tag = tag != null ? tag.replace(patt, value) : void 0;
           }
           $(o.$tag).replaceWith(tag);
           $dest = this.wrapFile(tag);
@@ -177,45 +172,8 @@
               jsonTags[tagNum][attr.nodeName] = attr.nodeValue;
               jsonTags[tagNum]['parentName'] = o.parent;
             }
-            if (o.parent) {
-              this.trail.push({});
-              this.trail[this.trail.length - 1].parent = o.parent;
-              this.trail[this.trail.length - 1].childs = [];
-              this.trail[this.trail.length - 1].childs.push(jsonTags[tagNum].key);
-            }
           }
           return jsonTags;
-        };
-
-        FilesChanged.prototype.checkTrailLoop = function() {
-          var i, trail, _i, _len, _ref, _results;
-
-          console.log('-=-=-=-');
-          _ref = this.trail;
-          _results = [];
-          for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
-            trail = _ref[i];
-            _results.push(this.getParents(i));
-          }
-          return _results;
-        };
-
-        FilesChanged.prototype.getParents = function(i) {
-          var j, parents;
-
-          console.log(this.trail[i]);
-          parents = (function() {
-            var _i, _results;
-
-            _results = [];
-            for (j = _i = 0; 0 <= i ? _i <= i : _i >= i; j = 0 <= i ? ++_i : --_i) {
-              _results.push(this.trail[j].parent);
-            }
-            return _results;
-          }).call(this);
-          parents = _.compact(parents);
-          parents = _.uniq(parents);
-          return console.log(parents);
         };
 
         FilesChanged.prototype.wrapFile = function(file) {
