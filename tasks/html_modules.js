@@ -62,6 +62,9 @@
 
           this.o = o;
           this.trail = [];
+          this.trails = [];
+          this.curTrail = 0;
+          this.prevTrail = -1;
           filesStorage.readFiles().then(function(files) {
             return _this.getFiles();
           });
@@ -119,12 +122,18 @@
               tag: $tag,
               parent: o.parent
             });
+            this.trails[i] = '';
+            this.curTrail = this.trails.length;
+            if (this.curTrail > this.prevTrail) {
+              this.prevTrail = this.curTrail;
+              trail.length = 0;
+            }
             compiledTag = this.compileTag({
               $tag: $tag,
               jsonTag: jsonTag,
               trail: trail
             });
-            console.log(i);
+            console.log(this.curTrail);
             _results.push(console.log(trail));
           }
           return _results;
@@ -133,6 +142,9 @@
         FilesChanged.prototype.compileTag = function(o) {
           var $dest, $tags, name, patt, tag, value, _ref;
 
+          if (o.trail.indexOf(o.jsonTag.key) !== -1) {
+            console.error('error');
+          }
           o.trail.push(o.jsonTag.key);
           tag = filesStorage.files[o.jsonTag.key];
           _ref = o.jsonTag;

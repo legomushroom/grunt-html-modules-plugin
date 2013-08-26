@@ -57,7 +57,9 @@ module.exports = (grunt) ->
             constructor:(o)->
                 @o = o
                 @trail = []
-                
+                @trails = []
+                @curTrail = 0
+                @prevTrail = -1
                 filesStorage.readFiles().then (files)=>
                     @getFiles()
 
@@ -92,24 +94,34 @@ module.exports = (grunt) ->
 
             compileTags:(o)->
                 trail = o.trail or []
+
                 for $tag, i in o.$tags
                     jsonTag  =  @getJSONTags 
                                         tag: $tag
                                         parent: o.parent
+
+                    @trails[i] = ''
+                    @curTrail = @trails.length
+
+                    if @curTrail > @prevTrail
+                        @prevTrail = @curTrail
+                        trail.length = 0
 
                     compiledTag = @compileTag 
                             $tag:       $tag
                             jsonTag:    jsonTag
                             trail:      trail
 
-                    console.log i
+                    console.log @curTrail
                     console.log trail
 
 
 
 
             compileTag:(o)->
-                # console.log o.jsonTag.key
+                if o.trail.indexOf(o.jsonTag.key) isnt -1
+                    console.error 'error'
+
                 o.trail.push o.jsonTag.key
                 tag = filesStorage.files[o.jsonTag.key]
 
