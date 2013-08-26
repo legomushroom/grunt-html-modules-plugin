@@ -57,8 +57,6 @@ module.exports = (grunt) ->
             constructor:(o)->
                 @o = o
                 @jsonTags = []
-                @trail = []
-                @parents = []
                 
                 filesStorage.readFiles().then (files)=>
                     @getFiles()
@@ -81,18 +79,14 @@ module.exports = (grunt) ->
                         newFile = @renderFile
                             file: file
                             fileSrc: f
-                            i: z
 
                         grunt.file.write "dest/#{f.src[z]}", newFile
 
 
             renderFile:(o)->
-                @trail = o.trail or []
-
                 $destFile   =   @wrapFile o.file
                 $tags       =   @getTagsInFile $destFile
 
-                @trail[o.i] ?= []
                 @compileTags 
                         $tags: $tags
 
@@ -100,7 +94,6 @@ module.exports = (grunt) ->
                     return @renderFile 
                         file: $destFile.html()
                         fileSrc: o.fileSrc
-                        i: ++o.i
                         trail: @trail
 
                 $destFile.html()
@@ -108,9 +101,6 @@ module.exports = (grunt) ->
             compileTags:(o)->
                 @jsonTags   =   @getJSONTags 
                                         tags: o.$tags
-                                        parent: o.parent
-
-                @checkTrailLoop()
 
                 # loop thrue json tags
                 for jsonTag, tagNum in @jsonTags
@@ -139,7 +129,6 @@ module.exports = (grunt) ->
                     jsonTags = @getJSONTags
                             tags: $tags
                             parent: @jsonTags[o.tagNum].key
-
                 tag
             
             getJSONTags:(o)->
@@ -149,34 +138,8 @@ module.exports = (grunt) ->
                     jsonTags[tagNum] = {}
                     for attr, i in o.tags[tagNum].attributes
                         jsonTags[tagNum][attr.nodeName] = attr.nodeValue
-                        jsonTags[tagNum]['parentName']  = o.parent
-
-                    console.log "num: #{tagNum} parent: #{o.parent}"
-                    console.log "num: #{tagNum} key: #{jsonTags[tagNum].key}"
-
-                    if o.parent 
-                        @trail.push {}
-                        @trail[@trail.length-1].parent = o.parent
-                        @trail[@trail.length-1].childs = []
-                        @trail[@trail.length-1].childs.push jsonTags[tagNum].key
 
                 jsonTags
-
-            checkTrailLoop:->
-                console.log @trail
-                # console.log '-=-=-=-'
-                # for trail, i in @trail
-                    # @getParents i
-
-            getParents:(i)->
-                parents = for j in [0..i]
-                    @trail[j].parent
-
-                parents = _.compact parents
-                parents = _.uniq parents
-
-                console.log parents
-
 
 
             wrapFile:(file)->
