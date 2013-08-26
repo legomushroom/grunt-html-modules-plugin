@@ -61,9 +61,7 @@
           var _this = this;
 
           this.o = o;
-          this.jsonTags = [];
           this.trail = [];
-          this.parents = [];
           filesStorage.readFiles().then(function(files) {
             return _this.getFiles();
           });
@@ -91,9 +89,7 @@
             for (z = _i = 0, _len = src.length; _i < _len; z = ++_i) {
               file = src[z];
               newFile = _this.renderFile({
-                file: file,
-                fileSrc: f,
-                i: z
+                file: file
               });
               _results.push(grunt.file.write("dest/" + f.src[z], newFile));
             }
@@ -102,22 +98,19 @@
         };
 
         FilesChanged.prototype.renderFile = function(o) {
-          var $destFile, $tags, _base, _name, _ref;
+          var $destFile, $tags;
 
-          this.trail = o.trail || [];
           $destFile = this.wrapFile(o.file);
           $tags = this.getTagsInFile($destFile);
-          if ((_ref = (_base = this.trail)[_name = o.i]) == null) {
-            _base[_name] = [];
-          }
           return this.compileTags({
             $tags: $tags
           });
         };
 
         FilesChanged.prototype.compileTags = function(o) {
-          var $tag, i, jsonTag, _i, _len, _ref, _results;
+          var $tag, compiledTag, i, jsonTag, trail, _i, _len, _ref, _results;
 
+          trail = o.trail || [];
           _ref = o.$tags;
           _results = [];
           for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
@@ -126,9 +119,38 @@
               tag: $tag,
               parent: o.parent
             });
-            _results.push(console.log(jsonTag));
+            compiledTag = this.compileTag({
+              $tag: $tag,
+              jsonTag: jsonTag,
+              trail: trail
+            });
+            console.log(i);
+            _results.push(console.log(trail));
           }
           return _results;
+        };
+
+        FilesChanged.prototype.compileTag = function(o) {
+          var $dest, $tags, name, patt, tag, value, _ref;
+
+          o.trail.push(o.jsonTag.key);
+          tag = filesStorage.files[o.jsonTag.key];
+          _ref = o.jsonTag;
+          for (name in _ref) {
+            value = _ref[name];
+            patt = new RegExp("\\$" + name, 'gi');
+            tag = tag != null ? tag.replace(patt, value) : void 0;
+          }
+          $(o.$tag).replaceWith(tag);
+          $dest = this.wrapFile(tag);
+          $tags = this.getTagsInFile($dest);
+          if ($tags.length) {
+            this.compileTags({
+              $tags: $tags,
+              trail: o.trail
+            });
+          }
+          return tag;
         };
 
         FilesChanged.prototype.getJSONTags = function(o) {
@@ -142,49 +164,6 @@
             jsonTag['parentName'] = o.parent;
           }
           return jsonTag;
-        };
-
-        FilesChanged.prototype.compileTag = function(o) {
-          var $dest, $tags, jsonTags, name, patt, tag, value, _ref;
-
-          tag = filesStorage.files[this.jsonTags[o.tagNum].key];
-          _ref = this.jsonTags[o.tagNum];
-          for (name in _ref) {
-            value = _ref[name];
-            patt = new RegExp("\\$" + name, 'gi');
-            tag = tag != null ? tag.replace(patt, value) : void 0;
-          }
-          $(o.$tag).replaceWith(tag);
-          $dest = this.wrapFile(tag);
-          $tags = this.getTagsInFile($dest);
-          if ($tags.length) {
-            jsonTags = this.getJSONTags({
-              tags: $tags,
-              parent: this.jsonTags[o.tagNum].key
-            });
-          }
-          return tag;
-        };
-
-        FilesChanged.prototype.checkTrailLoop = function() {
-          return console.log(this.trail);
-        };
-
-        FilesChanged.prototype.getParents = function(i) {
-          var j, parents;
-
-          parents = (function() {
-            var _i, _results;
-
-            _results = [];
-            for (j = _i = 0; 0 <= i ? _i <= i : _i >= i; j = 0 <= i ? ++_i : --_i) {
-              _results.push(this.trail[j].parent);
-            }
-            return _results;
-          }).call(this);
-          parents = _.compact(parents);
-          parents = _.uniq(parents);
-          return console.log(parents);
         };
 
         FilesChanged.prototype.wrapFile = function(file) {
