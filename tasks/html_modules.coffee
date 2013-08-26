@@ -96,30 +96,47 @@ module.exports = (grunt) ->
                 @compileTags 
                         $tags: $tags
 
-                if @getTagsInFile($destFile).length > 0
-                    return @renderFile 
-                        file: $destFile.html()
-                        fileSrc: o.fileSrc
-                        i: ++o.i
-                        trail: @trail
+                # if @getTagsInFile($destFile).length > 0
+                #     return @renderFile 
+                #         file: $destFile.html()
+                #         fileSrc: o.fileSrc
+                #         i: ++o.i
+                #         trail: @trail
 
-                $destFile.html()
+                # $destFile.html()
 
             compileTags:(o)->
-                @jsonTags   =   @getJSONTags 
-                                        tags: o.$tags
+                for $tag, i in o.$tags
+                    jsonTag  =  @getJSONTags 
+                                        tag: $tag
                                         parent: o.parent
 
-                @checkTrailLoop()
+                    console.log jsonTag
 
-                # loop thrue json tags
-                for jsonTag, tagNum in @jsonTags
-                    compiledTag = @compileTag 
-                            tagNum:     tagNum
-                            fileSrc:    o.fileSrc
-                            $tag:       o.$tags[tagNum]
+                # @checkTrailLoop()
 
-                @jsonTags
+                # # loop thrue json tags
+                # for jsonTag, tagNum in @jsonTags
+                #     compiledTag = @compileTag 
+                #             tagNum:     tagNum
+                #             fileSrc:    o.fileSrc
+                #             $tag:       o.$tags[tagNum]
+
+                # @jsonTags
+
+            getJSONTags:(o)->
+                jsonTag = {}
+                for attr, i in o.tag.attributes
+                    jsonTag[attr.nodeName] = attr.nodeValue
+                    jsonTag['parentName']  = o.parent
+
+                # if o.parent 
+                #     @trail.push {}
+                #     @trail[@trail.length-1].parent = o.parent
+                #     @trail[@trail.length-1].childs = []
+                #     @trail[@trail.length-1].childs.push jsonTags[tagNum].key
+
+                jsonTag
 
 
             compileTag:(o)->
@@ -142,25 +159,7 @@ module.exports = (grunt) ->
 
                 tag
             
-            getJSONTags:(o)->
-                jsonTags = []
-                for tagNum in [0...o.tags.length]
-                    #add new tags json record
-                    jsonTags[tagNum] = {}
-                    for attr, i in o.tags[tagNum].attributes
-                        jsonTags[tagNum][attr.nodeName] = attr.nodeValue
-                        jsonTags[tagNum]['parentName']  = o.parent
-
-                    console.log "num: #{tagNum} parent: #{o.parent}"
-                    console.log "num: #{tagNum} key: #{jsonTags[tagNum].key}"
-
-                    if o.parent 
-                        @trail.push {}
-                        @trail[@trail.length-1].parent = o.parent
-                        @trail[@trail.length-1].childs = []
-                        @trail[@trail.length-1].childs.push jsonTags[tagNum].key
-
-                jsonTags
+            
 
             checkTrailLoop:->
                 console.log @trail
