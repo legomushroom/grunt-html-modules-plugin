@@ -56,6 +56,7 @@ module.exports = (grunt) ->
             constructor:(o)->
                 @o = o
                 @jsonTags = []
+                @trail = []
                 
                 filesStorage.readFiles().then (files)=>
                     @getFiles()
@@ -78,28 +79,33 @@ module.exports = (grunt) ->
                         newFile = @renderFile
                             file: file
                             fileSrc: f
+                            i: z
+
+                        console.log @trail
+
                         grunt.file.write "dest/#{f.src[z]}", newFile
 
 
             renderFile:(o)->
+                @trail = o.trail or []
+
                 $destFile   =   @wrapFile o.file
                 $tags       =   @getTagsInFile $destFile
 
+                @trail[o.i] = []
                 @compileTags 
                         $tags: $tags
 
-
-                # if @getTagsInFile($destFile).length > 0
-                #     return @renderFile 
-                #         file: $destFile.html()
-                #         fileSrc: o.fileSrc
-                        # parent: 
+                if @getTagsInFile($destFile).length > 0
+                    return @renderFile 
+                        file: $destFile.html()
+                        fileSrc: o.fileSrc
+                        i: ++o.i
+                        trail: @trail
 
                 $destFile.html()
 
             compileTags:(o)->
-                console.log 'compile tags'
-
                 @jsonTags   =   @getJSONTags 
                                         tags: o.$tags
                                         parent: o.parent
@@ -109,6 +115,8 @@ module.exports = (grunt) ->
                             tagNum:     tagNum
                             fileSrc:    o.fileSrc
                             $tag:       o.$tags[tagNum]
+
+                @jsonTags
 
 
             compileTag:(o)->
@@ -122,10 +130,12 @@ module.exports = (grunt) ->
 
                 $dest = @wrapFile tag
                 $tags = @getTagsInFile $dest
-                if $tags.length 
-                    @compileTags 
-                        $tags: $tags
-                        parent: @jsonTags[o.tagNum].key
+                
+                if $tags.length
+                    jsonTags = @getJSONTags
+                            tags: $tags
+                            parent: @jsonTags[o.tagNum].key
+
                 tag
             
             getJSONTags:(o)->
@@ -136,9 +146,16 @@ module.exports = (grunt) ->
                     for attr, i in o.tags[tagNum].attributes
                         jsonTags[tagNum][attr.nodeName] = attr.nodeValue
                         jsonTags[tagNum]['parentName']  = o.parent
+                    
+                    if o.parent 
+                        @trail[@trail.length-1][o.parent] ?= []
+                        @trail[@trail.length-1][o.parent].push jsonTags[tagNum].key
 
-                console.log jsonTags
+                        @checkTrailLoop()
                 jsonTags
+
+            checkTrailLoop:->
+                
 
             wrapFile:(file)->
                 $(file).wrap('<div>').parent()

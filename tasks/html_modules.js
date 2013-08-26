@@ -61,6 +61,7 @@
 
           this.o = o;
           this.jsonTags = [];
+          this.trail = [];
           filesStorage.readFiles().then(function(files) {
             return _this.getFiles();
           });
@@ -89,8 +90,10 @@
               file = src[z];
               newFile = _this.renderFile({
                 file: file,
-                fileSrc: f
+                fileSrc: f,
+                i: z
               });
+              console.log(_this.trail);
               _results.push(grunt.file.write("dest/" + f.src[z], newFile));
             }
             return _results;
@@ -100,37 +103,45 @@
         FilesChanged.prototype.renderFile = function(o) {
           var $destFile, $tags;
 
+          this.trail = o.trail || [];
           $destFile = this.wrapFile(o.file);
           $tags = this.getTagsInFile($destFile);
+          this.trail[o.i] = [];
           this.compileTags({
             $tags: $tags
           });
+          if (this.getTagsInFile($destFile).length > 0) {
+            return this.renderFile({
+              file: $destFile.html(),
+              fileSrc: o.fileSrc,
+              i: ++o.i,
+              trail: this.trail
+            });
+          }
           return $destFile.html();
         };
 
         FilesChanged.prototype.compileTags = function(o) {
-          var compiledTag, jsonTag, tagNum, _i, _len, _ref, _results;
+          var compiledTag, jsonTag, tagNum, _i, _len, _ref;
 
-          console.log('compile tags');
           this.jsonTags = this.getJSONTags({
             tags: o.$tags,
             parent: o.parent
           });
           _ref = this.jsonTags;
-          _results = [];
           for (tagNum = _i = 0, _len = _ref.length; _i < _len; tagNum = ++_i) {
             jsonTag = _ref[tagNum];
-            _results.push(compiledTag = this.compileTag({
+            compiledTag = this.compileTag({
               tagNum: tagNum,
               fileSrc: o.fileSrc,
               $tag: o.$tags[tagNum]
-            }));
+            });
           }
-          return _results;
+          return this.jsonTags;
         };
 
         FilesChanged.prototype.compileTag = function(o) {
-          var $dest, $tags, name, patt, tag, value, _ref;
+          var $dest, $tags, jsonTags, name, patt, tag, value, _ref;
 
           tag = filesStorage.files[this.jsonTags[o.tagNum].key];
           _ref = this.jsonTags[o.tagNum];
@@ -143,8 +154,8 @@
           $dest = this.wrapFile(tag);
           $tags = this.getTagsInFile($dest);
           if ($tags.length) {
-            this.compileTags({
-              $tags: $tags,
+            jsonTags = this.getJSONTags({
+              tags: $tags,
               parent: this.jsonTags[o.tagNum].key
             });
           }
@@ -152,7 +163,7 @@
         };
 
         FilesChanged.prototype.getJSONTags = function(o) {
-          var attr, i, jsonTags, tagNum, _i, _j, _len, _ref, _ref1;
+          var attr, i, jsonTags, tagNum, _base, _i, _j, _len, _name, _ref, _ref1, _ref2;
 
           jsonTags = [];
           for (tagNum = _i = 0, _ref = o.tags.length; 0 <= _ref ? _i < _ref : _i > _ref; tagNum = 0 <= _ref ? ++_i : --_i) {
@@ -163,10 +174,18 @@
               jsonTags[tagNum][attr.nodeName] = attr.nodeValue;
               jsonTags[tagNum]['parentName'] = o.parent;
             }
+            if (o.parent) {
+              if ((_ref2 = (_base = this.trail[this.trail.length - 1])[_name = o.parent]) == null) {
+                _base[_name] = [];
+              }
+              this.trail[this.trail.length - 1][o.parent].push(jsonTags[tagNum].key);
+              this.checkTrailLoop();
+            }
           }
-          console.log(jsonTags);
           return jsonTags;
         };
+
+        FilesChanged.prototype.checkTrailLoop = function() {};
 
         FilesChanged.prototype.wrapFile = function(file) {
           return $(file).wrap('<div>').parent();
