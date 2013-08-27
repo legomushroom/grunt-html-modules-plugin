@@ -20,7 +20,9 @@ module.exports = function(grunt) {
 
     // Configuration to be run (and then tested).
     html_modules: {
-      watch_folder: 'tasks/*.html'
+      // watch_folder: 'dest/tasks/templates/**/*.html'
+      src: 'dest/tasks/src/**/*.html',
+      // dest: 'dest/'
     },
 
     // Unit tests.
@@ -29,7 +31,7 @@ module.exports = function(grunt) {
     },
 
     watch: {
-      files: ['<%= html_modules.watch_folder %>'],
+      // files: ['dest/tasks/templates/**/*.html'],
       tasks: ['html_modules']
     }
 
