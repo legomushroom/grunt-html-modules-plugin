@@ -20,11 +20,9 @@ module.exports = function(grunt) {
 
     // Configuration to be run (and then tested).
     html_modules: {
-      watch_folder: 'html-test/**/*.html',
-      settings:{
-        particles: 'html-test/particles/',
-        monolits: 'build'
-      }
+      // watch_folder: 'dest/tasks/templates/**/*.html'
+      src: 'dest/tasks/src/**/*.html',
+      // dest: 'dest/'
     },
 
     // Unit tests.
@@ -33,10 +31,15 @@ module.exports = function(grunt) {
     },
 
     watch: {
+      // files: ['dest/tasks/templates/**/*.html'],
       tasks: ['html_modules']
     }
 
   });
+
+  // grunt.event.on('watch', function(action, filepath) {
+  //   grunt.config(['html_modules', 'all'], filepath);
+  // });
 
   // Actually load this plugin's task(s).
   grunt.loadTasks('tasks');
