@@ -1,5 +1,5 @@
 {
-  "name": "html-modules",
+  "name": "html_modules",
   "description": "allows to include small html parts in other html",
   "version": "0.0.2",
   "homepage": "https://github.com/legomushroom/grunt-plugin",
